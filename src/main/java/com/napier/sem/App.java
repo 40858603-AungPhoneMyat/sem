@@ -2,6 +2,6 @@ package com.napier.sem;
 
 public class App {
     static void main() {
-        System.out.println("Boo Yah!!");
+        System.out.println("..Boo Yah!!");
     }
 }
