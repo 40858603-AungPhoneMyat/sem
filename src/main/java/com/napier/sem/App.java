@@ -10,7 +10,7 @@ public class App
     public static void main(String[] args)
     {
         // Connect to MongoDB from IntelliJ/Windows
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        MongoClient mongoClient = new MongoClient("mongodb", 27017);
 
         MongoDatabase database = mongoClient.getDatabase("mydb");
         MongoCollection<Document> collection = database.getCollection("test");
