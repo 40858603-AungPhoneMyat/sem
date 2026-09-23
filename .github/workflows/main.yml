@@ -51,7 +51,7 @@ jobs:
           docker run \
             --network se-methods \
             --name devopscontainer \
-            -e MONGO_IP=$MONGO_IP \
+            -e MONGO_IP="$MONGO_IP" \
             se_methods
 
       - name: View logs
