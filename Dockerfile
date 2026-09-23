@@ -1,4 +1,7 @@
-FROM bellsoft/liberica-openjdk-debian:26
-COPY ./target/classes /tmp
+FROM eclipse-temurin:25-jdk
+
+COPY target/seMethods-0.1.0.2-jar-with-dependencies.jar /tmp/
+
 WORKDIR /tmp
-ENTRYPOINT ["java", "com.napier.sem.App"]
+
+ENTRYPOINT ["java", "-jar", "seMethods-0.1.0.2-jar-with-dependencies.jar"]
