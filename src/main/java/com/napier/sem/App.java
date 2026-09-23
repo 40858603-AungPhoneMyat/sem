@@ -9,8 +9,18 @@ public class App
 {
     public static void main(String[] args)
     {
-        // Connect to MongoDB from IntelliJ/Windows
-        MongoClient mongoClient = new MongoClient("mongodb", 27017);
+        // Get MongoDB host from environment variable.
+        // GitHub Actions/Docker provides MONGO_IP.
+        // If running from IntelliJ, use localhost.
+        String mongoHost = System.getenv("MONGO_IP");
+
+        if (mongoHost == null || mongoHost.isEmpty()) {
+            mongoHost = "localhost";
+        }
+
+        System.out.println("Connecting to MongoDB at: " + mongoHost + ":27017");
+
+        MongoClient mongoClient = new MongoClient(mongoHost, 27017);
 
         MongoDatabase database = mongoClient.getDatabase("mydb");
         MongoCollection<Document> collection = database.getCollection("test");
@@ -24,5 +34,7 @@ public class App
 
         Document myDoc = collection.find().first();
         System.out.println(myDoc.toJson());
+
+        mongoClient.close();
     }
 }
