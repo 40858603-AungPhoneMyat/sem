@@ -17,25 +17,25 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
 
-      - name: Setup Docker network and MongoDB
+      - name: Setup network
         run: |
           docker network create se-methods
           docker pull mongo
-          docker run -d \
-            --name mongo-dbserver \
-            --network se-methods \
-            --network-alias mongodb \
-            mongo
+          docker run -d --name mongo-dbserver --network se-methods mongo
           sleep 15
 
-      - name: Check MongoDB
+      - name: Get MongoDB IP
         run: |
-          docker ps
-          docker network inspect se-methods
+          MONGO_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mongo-dbserver)
+          echo "MongoDB IP: $MONGO_IP"
+          echo "MONGO_IP=$MONGO_IP" >> $GITHUB_ENV
 
-      - name: Test MongoDB DNS
+      - name: Test MongoDB
         run: |
-          docker run --rm --network se-methods busybox nslookup mongodb
+          docker run --rm --network se-methods mongo mongosh \
+            --host $MONGO_IP \
+            --port 27017 \
+            --eval "db.runCommand({ ping: 1 })"
 
       - name: Build with Maven
         run: mvn clean package
@@ -51,6 +51,7 @@ jobs:
           docker run \
             --network se-methods \
             --name devopscontainer \
+            -e MONGO_IP=$MONGO_IP \
             se_methods
 
       - name: View logs
