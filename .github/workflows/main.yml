@@ -23,21 +23,36 @@ jobs:
 
       - name: Start MongoDB
         run: |
-          docker pull mongo:latest
+          docker pull mongo:8.0
 
           docker run -d \
             --name mongo-dbserver \
             --network se-methods \
             -p 27017:27017 \
-            mongo:latest
+            mongo:8.0
 
           echo "Waiting for MongoDB..."
-          sleep 15
 
+          for i in {1..30}; do
+            if docker exec mongo-dbserver \
+              mongosh --quiet --eval "db.runCommand({ ping: 1 }).ok" 2>/dev/null | grep -q "1"; then
+              echo "MongoDB is ready!"
+              break
+            fi
+
+            if [ "$(docker inspect -f '{{.State.Running}}' mongo-dbserver 2>/dev/null)" != "true" ]; then
+              echo "MongoDB container stopped!"
+              echo "===== MongoDB logs ====="
+              docker logs mongo-dbserver 2>&1 || true
+              exit 1
+            fi
+
+            echo "MongoDB not ready yet... attempt $i/30"
+            sleep 2
+          done
+
+          echo "===== MongoDB status ====="
           docker ps -a
-
-          echo "MongoDB logs:"
-          docker logs mongo-dbserver
 
       - name: Test MongoDB
         run: |
@@ -50,6 +65,7 @@ jobs:
 
       - name: Check target
         run: |
+          echo "===== TARGET ====="
           ls -la target
 
       - name: Build Docker image
@@ -66,11 +82,11 @@ jobs:
       - name: View logs
         if: always()
         run: |
-          echo "===== Docker containers ====="
+          echo "===== ALL CONTAINERS ====="
           docker ps -a
 
-          echo "===== MongoDB logs ====="
+          echo "===== MONGODB LOGS ====="
           docker logs mongo-dbserver 2>&1 || true
 
-          echo "===== Java logs ====="
+          echo "===== JAVA LOGS ====="
           docker logs devopscontainer 2>&1 || true
