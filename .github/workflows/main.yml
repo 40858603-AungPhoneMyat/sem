@@ -29,30 +29,37 @@ jobs:
             --name mongo-dbserver \
             --network se-methods \
             -p 27017:27017 \
+            -e GLIBC_TUNABLES=glibc.pthread.rseq=1 \
             mongo:8.0
 
           echo "Waiting for MongoDB..."
 
           for i in {1..30}; do
+
             if docker exec mongo-dbserver \
-              mongosh --quiet --eval "db.runCommand({ ping: 1 }).ok" 2>/dev/null | grep -q "1"; then
+              mongosh --quiet \
+              --eval "db.runCommand({ ping: 1 }).ok" 2>/dev/null | grep -q "1"; then
+
               echo "MongoDB is ready!"
               break
+
             fi
 
             if [ "$(docker inspect -f '{{.State.Running}}' mongo-dbserver 2>/dev/null)" != "true" ]; then
+
               echo "MongoDB container stopped!"
+
               echo "===== MongoDB logs ====="
               docker logs mongo-dbserver 2>&1 || true
+
               exit 1
+
             fi
 
             echo "MongoDB not ready yet... attempt $i/30"
             sleep 2
-          done
 
-          echo "===== MongoDB status ====="
-          docker ps -a
+          done
 
       - name: Test MongoDB
         run: |
@@ -65,7 +72,7 @@ jobs:
 
       - name: Check target
         run: |
-          echo "===== TARGET ====="
+          echo "===== TARGET FOLDER ====="
           ls -la target
 
       - name: Build Docker image
