@@ -1,4 +1,3 @@
-```yaml
 name: A workflow for my Hello World App
 
 on: push
@@ -23,7 +22,11 @@ jobs:
           docker pull mongo
           docker run -d --name mongo-dbserver -p 27017:27017 mongo
           sleep 15
+
+          echo "===== Docker containers ====="
           docker ps -a
+
+          echo "===== MongoDB logs ====="
           docker logs mongo-dbserver
 
       - name: Test MongoDB
@@ -35,10 +38,13 @@ jobs:
         run: mvn clean package
 
       - name: Check target
-        run: ls -la target
+        run: |
+          echo "===== Target folder ====="
+          ls -la target
 
       - name: Build Docker image
-        run: docker build -t se_methods .
+        run: |
+          docker build -t se_methods .
 
       - name: Run Java container
         run: |
@@ -50,9 +56,11 @@ jobs:
       - name: View logs
         if: always()
         run: |
+          echo "===== All containers ====="
           docker ps -a
+
           echo "===== MongoDB logs ====="
           docker logs mongo-dbserver 2>&1 || true
+
           echo "===== Java container logs ====="
           docker logs devopscontainer 2>&1 || true
-```
