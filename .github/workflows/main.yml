@@ -20,17 +20,47 @@ jobs:
       - name: Setup MongoDB
         run: |
           docker pull mongo
-          docker run -d --name mongo-dbserver -p 27017:27017 mongo
+
+          docker run -d \
+            --name mongo-dbserver \
+            -p 27017:27017 \
+            mongo
+
           sleep 15
 
-          echo "===== Docker containers ====="
+          echo "================================"
+          echo "DOCKER CONTAINERS"
+          echo "================================"
           docker ps -a
 
-          echo "===== MongoDB logs ====="
-          docker logs mongo-dbserver
+          echo "================================"
+          echo "MONGODB LOGS"
+          echo "================================"
+          docker logs mongo-dbserver 2>&1 || true
+
+      - name: Check MongoDB Status
+        run: |
+          echo "================================"
+          echo "MONGODB STATUS"
+          echo "================================"
+
+          docker inspect mongo-dbserver \
+            --format='Status={{.State.Status}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}'
+
+          echo "================================"
+          echo "MONGODB LOGS AGAIN"
+          echo "================================"
+
+          docker logs mongo-dbserver 2>&1 || true
 
       - name: Test MongoDB
         run: |
+          if [ "$(docker inspect -f '{{.State.Running}}' mongo-dbserver)" != "true" ]; then
+            echo "MongoDB is NOT running."
+            echo "Stopping workflow so we can see the MongoDB error."
+            exit 1
+          fi
+
           docker exec mongo-dbserver mongosh \
             --eval "db.runCommand({ ping: 1 })"
 
@@ -39,12 +69,13 @@ jobs:
 
       - name: Check target
         run: |
-          echo "===== Target folder ====="
+          echo "================================"
+          echo "TARGET FOLDER"
+          echo "================================"
           ls -la target
 
       - name: Build Docker image
-        run: |
-          docker build -t se_methods .
+        run: docker build -t se_methods .
 
       - name: Run Java container
         run: |
@@ -56,11 +87,17 @@ jobs:
       - name: View logs
         if: always()
         run: |
-          echo "===== All containers ====="
+          echo "================================"
+          echo "ALL CONTAINERS"
+          echo "================================"
           docker ps -a
 
-          echo "===== MongoDB logs ====="
+          echo "================================"
+          echo "MONGODB LOGS"
+          echo "================================"
           docker logs mongo-dbserver 2>&1 || true
 
-          echo "===== Java container logs ====="
+          echo "================================"
+          echo "JAVA LOGS"
+          echo "================================"
           docker logs devopscontainer 2>&1 || true
