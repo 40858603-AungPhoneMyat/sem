@@ -24,16 +24,10 @@ jobs:
           docker run -d --name mongo-dbserver --network se-methods mongo
           sleep 15
 
-      - name: Get MongoDB IP
-        run: |
-          MONGO_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mongo-dbserver)
-          echo "MongoDB IP: $MONGO_IP"
-          echo "MONGO_IP=$MONGO_IP" >> $GITHUB_ENV
-
       - name: Test MongoDB
         run: |
           docker run --rm --network se-methods mongo mongosh \
-            --host $MONGO_IP \
+            --host mongo-dbserver \
             --port 27017 \
             --eval "db.runCommand({ ping: 1 })"
 
@@ -51,7 +45,6 @@ jobs:
           docker run \
             --network se-methods \
             --name devopscontainer \
-            -e MONGO_IP="$MONGO_IP" \
             se_methods
 
       - name: View logs
